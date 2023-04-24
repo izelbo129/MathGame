@@ -1,7 +1,5 @@
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Scanner;
-import java.util.Stack;
+import java.util.*;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -22,6 +20,7 @@ public class MathController {
 
     private final int targetNumber;
     private final TextField textInput;
+    public int getDifference;
     private LinkedList<Integer> numberSet;
 
     private Stack<LinkedList<Integer>> undoStack;
@@ -51,11 +50,11 @@ public class MathController {
         inputPane.setPadding(new Insets(250,0,0,0));
         this.mathPane.getChildren().add(inputPane);
         createDebugPanel();
+        //new NumberSetSolver(this.numberSet, this.targetNumber);
 
 
-        setDebugLabel("Your target number is " + this.targetNumber);
-        setDebugLabel("Your number set is " + this.numberSet);
-        setDebugLabel("Try to get as close as possible. Good luck! You can use 'undo' and 'quit'.");
+
+        setDebugLabel("Win debug to test win screen");
         actionEvent();
 
 
@@ -81,7 +80,11 @@ public class MathController {
         while (scanner.hasNextLine()) {
             input = scanner.nextLine();
                 Expression e = new Expression(input);
-                if (validateExpression(input)) {
+
+                if (Objects.equals(input, "win debug")) {
+                    this.uiController.createWinPane();
+
+                } else if (validateExpression(input)) {
                     calculateSet(input, e);
                 }
             }
@@ -112,17 +115,17 @@ public class MathController {
 
             setDebugLabel("Your new set is " + this.numberSet + " | Reminder: Target = " + this.targetNumber);
         } else {
-            int targetDifference = abs((int) (this.targetNumber - e.calculate()));
+            this.getDifference = abs((int) (this.targetNumber - e.calculate()));
 
-            if (targetDifference == 0) {
-                setDebugLabel("Perfect Score! Your number " + e.calculate() + " is " + targetDifference + " away from the target number " + this.targetNumber + "!");
+            if (this.getDifference == 0) {
+                setDebugLabel("Perfect Score! Your number " + e.calculate() + " is " + this.getDifference + " away from the target number " + this.targetNumber + "!");
+                this.uiController.createWinPane();
 
             } else {
 
-                this.uiController.setSetLabel("Your number " + e.calculate() + " is " + targetDifference + " away from the target number " + this.targetNumber + ".");
+                this.uiController.setSetLabel("Your number " + e.calculate() + " is " + this.getDifference + " away from the target number " + this.targetNumber + ".");
+                this.uiController.createWinPane();
             }
-            new MathController(mathPane, this.uiController);
-
         }
     }
 
@@ -252,6 +255,7 @@ public class MathController {
     public void setFocusInput() {
         this.textInput.requestFocus();
     }
+
 }
 
 

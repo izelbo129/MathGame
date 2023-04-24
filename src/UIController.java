@@ -8,6 +8,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -27,6 +28,7 @@ public class UIController {
     private final StackPane mathPane;
 
     private final MathController mathController;
+    private final int speed = 15;
 
     private Label setLabel;
     private Button undoButton;
@@ -34,10 +36,13 @@ public class UIController {
     private Button restartButton;
     private Label debugLabel;
     private StackPane optionsPane;
+    private Button restartWinButton;
+
 
     public UIController() {
         this.mathPane = new StackPane();
         this.mathController = new MathController(this.mathPane,this);
+        //new BackgroundShape(this.mathPane);
         setUpUIElements();
 
     }
@@ -74,6 +79,8 @@ public class UIController {
         this.mathPane.getChildren().addAll(vert,buttonBox);
         this.mathPane.setStyle("-fx-background-color: #fafafa;");
 
+
+
     }
 
 
@@ -85,6 +92,26 @@ public class UIController {
 
     public Parent getRoot() {
         return this.mathPane;
+    }
+
+
+
+    public void createWinPane() {
+        Label winLabel = new Label("Nice Job! you were " + this.mathController.getDifference + " away from the target number " + this.mathController.getTarget());
+        System.out.println("DEBUG CREATE WIN");
+        VBox winPane = new VBox();
+        winPane.setAlignment(Pos.CENTER);
+        this.restartWinButton = new Button("Restart");
+        this.restartWinButton.setStyle("-fx-background-color: #c5c5c5;");
+        winPane.getChildren().addAll(winLabel, this.restartButton);
+        this.mathPane.getChildren().add(winPane);
+        winPane.setStyle("-fx-background-color: #935151;");
+        this.restartWinButton.toFront();
+        this.restartWinButton.requestFocus();
+        this.restartWinButton.setOnAction(event -> {
+            System.out.println("TEST");
+            restart();
+        });
     }
 
     public void createOptionsPane() {
@@ -119,34 +146,43 @@ public class UIController {
         optionsBox.setAlignment(Pos.CENTER);
         this.optionsPane.getChildren().addAll(background, optionsBox);
 
-
-        this.restartButton.setOnAction(event -> {
-            System.out.println("DEBUG: RESTART");
-            UIController newController = new UIController();
-            Scene scene = this.restartButton.getScene();
-            scene.setRoot(newController.getRoot());
-            this.optionsPane.toBack();
-        });
-
-        quitButton.setOnAction(event -> {
-            System.exit(0);
-        });
-
-
-        exitButton.setOnAction(event -> {
-            this.mathPane.setStyle("-fx-background-color: #fafafa;");
-            this.optionsPane.setOpacity(0);
-            this.optionsPane.toBack();
-            this.mathController.setFocusInput();
-
-        });
-
-
         this.optionsPane.setOpacity(0);
         this.mathPane.getChildren().add(this.optionsPane);
 
 
+        this.restartButton.setOnAction(event -> {
+            restart();
+        });
+
+        quitButton.setOnAction(event -> {
+            quit();
+        });
+
+        exitButton.setOnAction(event -> {
+            exit();
+        });
+
     }
+
+    public void quit() {
+        System.exit(0);
+    }
+
+    public void exit() {
+        this.mathPane.setStyle("-fx-background-color: #fafafa;");
+        this.optionsPane.setOpacity(0);
+        this.optionsPane.toBack();
+        this.mathController.setFocusInput();
+    }
+
+    public void restart() {
+        System.out.println("DEBUG: RESTART");
+        UIController newController = new UIController();
+        Scene scene = this.restartButton.getScene();
+        scene.setRoot(newController.getRoot());
+        this.optionsPane.toBack();
+    }
+
 
     public void showOptionsPane() {
         FadeTransition fadeTransition = new FadeTransition(Duration.millis(200), this.optionsPane);
