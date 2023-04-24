@@ -3,6 +3,7 @@ import javafx.animation.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -18,14 +19,14 @@ import javafx.scene.text.Text;
 import javafx.util.Duration;
 import javafx.scene.Scene;
 
+import java.nio.file.CopyOption;
 import java.util.Stack;
 
 public class UIController {
 
-    private StackPane mathPane;
+    private final StackPane mathPane;
 
-    private MathController mathController;
-    private Label targetLabel;
+    private final MathController mathController;
 
     private Label setLabel;
     private Button undoButton;
@@ -43,13 +44,13 @@ public class UIController {
 
 
     public void setUpUIElements() {
-        this.targetLabel = new Label("Target Number: " + this.mathController.getTarget());
+        Label targetLabel = new Label("Target Number: " + this.mathController.getTarget());
         this.setLabel = new Label("Number Set: " + this.mathController.getSet());
-        this.targetLabel.setStyle("-fx-font-size: 20px;");
+        targetLabel.setStyle("-fx-font-size: 20px;");
         this.setLabel.setStyle("-fx-font-size: 24px;");
         this.undoButton = new Button("Undo");
+        this.undoButton.setStyle("-fx-background-color: #F1F1F1FF;");
         this.undoButton.setFocusTraversable(true);
-        this.undoButton.setStyle("-fx-background-color: #c5c5c5;");
         createOptionsPane();
 
 
@@ -65,12 +66,13 @@ public class UIController {
         buttonBox.setPadding(new Insets(25,25,25,25));
 
 
-        VBox vert = new VBox(20, this.targetLabel, this.setLabel);
+        VBox vert = new VBox(20, targetLabel, this.setLabel);
         vert.setAlignment(Pos.TOP_CENTER);
         vert.setPadding(new Insets(150, 0, 0, 0));
 
 
         this.mathPane.getChildren().addAll(vert,buttonBox);
+        this.mathPane.setStyle("-fx-background-color: #fafafa;");
 
     }
 
@@ -88,33 +90,61 @@ public class UIController {
     public void createOptionsPane() {
 
         this.restartButton = new Button("Restart");
-        this.restartButton.setFocusTraversable(true);
         this.restartButton.setStyle("-fx-background-color: #c5c5c5;");
 
+        Button quitButton = new Button("Quit");
+
+        quitButton.setStyle("-fx-background-color: #c5c5c5;");
+
+        Button exitButton = new Button("<-- Go Back");
+        exitButton.setStyle("-fx-background-color: #c5c5c5;");
+
+        StackPane exitPane = new StackPane(exitButton);
+        exitPane.setAlignment(Pos.TOP_LEFT);
+        exitPane.setPadding(new Insets(-125,50,0,50));
+
+
+        this.optionsPane = new StackPane();
+
+        this.optionsPane.setPrefSize(950, 560);
+
+        Rectangle background = new Rectangle(this.optionsPane.getPrefWidth(), this.optionsPane.getPrefHeight());
+        background.setFill(Color.WHITE);
+
+        Text label = new Text("Options");
+        label.setFont(Font.font(50));
+        VBox optionsBox = new VBox(exitPane, label, this.restartButton, quitButton);
+
+        optionsBox.setSpacing(50);
+        optionsBox.setAlignment(Pos.CENTER);
+        this.optionsPane.getChildren().addAll(background, optionsBox);
+
+
         this.restartButton.setOnAction(event -> {
+            System.out.println("DEBUG: RESTART");
             UIController newController = new UIController();
             Scene scene = this.restartButton.getScene();
             scene.setRoot(newController.getRoot());
             this.optionsPane.toBack();
         });
 
-        this.optionsPane = new StackPane();
+        quitButton.setOnAction(event -> {
+            System.exit(0);
+        });
 
-        this.optionsPane.setPrefSize(950, 550);
 
-        Rectangle background = new Rectangle(this.optionsPane.getPrefWidth(), this.optionsPane.getPrefHeight());
-        background.setFill(Color.WHITE);
-        background.setStroke(Color.BLACK);
-        this.optionsPane.getChildren().add(background);
+        exitButton.setOnAction(event -> {
+            this.mathPane.setStyle("-fx-background-color: #fafafa;");
+            this.optionsPane.setOpacity(0);
+            this.optionsPane.toBack();
+            this.mathController.setFocusInput();
 
-        Text label = new Text("Options");
-        label.setFont(Font.font(50));
-        VBox optionsBox = new VBox(label);
-        optionsBox.setAlignment(Pos.TOP_CENTER);
-        this.optionsPane.getChildren().add(optionsBox);
+        });
+
 
         this.optionsPane.setOpacity(0);
         this.mathPane.getChildren().add(this.optionsPane);
+
 
     }
 
@@ -125,11 +155,12 @@ public class UIController {
         fadeTransition.setFromValue(0);
         fadeTransition.setToValue(1);
         fadeTransition.play();
+        this.restartButton.toFront();
     }
 
 
     public void undoButtonColorGray() {
-        this.undoButton.setStyle("-fx-background-color: #dcdcdc;");
+        this.undoButton.setStyle("-fx-background-color: #f1f1f1;");
     }
 
     public void undoButtonColorDefault() {

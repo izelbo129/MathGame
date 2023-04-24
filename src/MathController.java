@@ -99,11 +99,13 @@ public class MathController {
                 int num = Integer.parseInt(token);
                 if (this.numberSet.contains(num)) {
                     this.numberSet.removeFirstOccurrence(num);
+                    this.uiController.undoButtonColorDefault();
                 }
             }
         }
         this.numberSet.add((int) e.calculate());
         this.undoStack.push(new LinkedList<>(this.numberSet));
+
 
         if (this.numberSet.size() > 1) {
             this.uiController.setSetLabel("Number Set: " + this.numberSet);
@@ -181,18 +183,22 @@ public class MathController {
 
 
     public void undo() {
-        if (undoStack.size() > 1) {
+        if (undoStack.size() == 1) {
+            this.uiController.undoButtonColorGray();
+            setDebugLabel("You can't undo any further.");
+        } else {
             this.undoStack.pop();
             this.numberSet = undoStack.peek();
             setDebugLabel("Your set is now " + this.numberSet + ".");
             setDebugLabel(String.valueOf(undoStack));
             this.uiController.undoButtonColorDefault();
-        } else {
-            setDebugLabel("You can't undo any further.");
-            this.uiController.undoButtonColorGray();
         }
         this.uiController.setSetLabel("Number Set: " + this.numberSet);
         this.textInput.requestFocus();
+        if (undoStack.size() == 1) {
+            this.uiController.undoButtonColorGray();
+        }
+        System.out.println(undoStack);
     }
 
     public int getTarget() {
@@ -243,7 +249,10 @@ public class MathController {
         }
 
 
+    public void setFocusInput() {
+        this.textInput.requestFocus();
     }
+}
 
 
 
