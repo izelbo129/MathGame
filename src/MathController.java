@@ -2,66 +2,97 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.Stack;
-
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.mariuszgromada.math.mxparser.*;
+import javafx.scene.input.KeyCode;
+
+import javafx.animation.*;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 
 import static java.lang.Math.abs;
 
 public class MathController {
 
     private final int targetNumber;
+    private final TextField textInput;
     private LinkedList<Integer> numberSet;
 
     private Stack<LinkedList<Integer>> undoStack;
 
+    private StackPane mathPane;
 
-    public MathController() {
+    private UIController uiController;
+    private Label debugLabel;
+
+
+    public MathController(StackPane mathPane, UIController uiController) {
+        this.uiController = uiController;
+        this.mathPane = mathPane;
         this.undoStack = new Stack<>();
-        License.iConfirmNonCommercialUse("IanZelbo");
         this.numberSet = new LinkedList<>();
         this.targetNumber = (int) (Math.random() * 101);
         for (int i = 0; i < 5; i++) {
-            int setRandom = (int) (Math.random() * 6);
+            int setRandom = (int) (Math.random() * 13);
             this.numberSet.add(setRandom);
         }
         this.undoStack.push(new LinkedList<>(this.numberSet));
+        this.textInput = new TextField();
+        this.textInput.setAlignment(Pos.CENTER);
+        this.textInput.setFocusTraversable(true);
+        VBox inputPane = new VBox(10, this.textInput);
+        inputPane.setMaxWidth(300);
+        inputPane.setPadding(new Insets(250,0,0,0));
+        this.mathPane.getChildren().add(inputPane);
+        createDebugPanel();
 
-        System.out.println("Your target number is " + this.targetNumber);
-        System.out.println("Your number set is " + this.numberSet);
-        System.out.println("Try to get as close as possible. Good luck! You can use 'undo' and 'quit'.");
-        callInput();
+
+        setDebugLabel("Your target number is " + this.targetNumber);
+        setDebugLabel("Your number set is " + this.numberSet);
+        setDebugLabel("Try to get as close as possible. Good luck! You can use 'undo' and 'quit'.");
+        actionEvent();
+
+
 
     }
 
-    private void callInput() {
-        Scanner scanner = new Scanner(System.in);
-        String input;
-
-        while (true) {
-            input = scanner.nextLine();
-
-            if (input.equalsIgnoreCase("undo")) {
-                undo();
+    private void actionEvent() {
+        this.textInput.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                callInput();
+            } else if (event.getCode() == KeyCode.ESCAPE) {
+                this.uiController.showOptionsPane();
+                setDebugLabel("escape");
             }
-            else if (input.equalsIgnoreCase("quit")) {
-                    System.out.println("Thanks for playing!");
-                    System.exit(0);
-            } else {
+        });
+    }
+
+
+    private void callInput() {
+        String input = this.textInput.getText();
+        Scanner scanner = new Scanner(input);
+
+        while (scanner.hasNextLine()) {
+            input = scanner.nextLine();
                 Expression e = new Expression(input);
                 if (validateExpression(input)) {
                     calculateSet(input, e);
                 }
             }
-
+            this.textInput.clear();
         }
-    }
-
 
 
 
     public void calculateSet(String expression, Expression e) {
         expression = expression.replaceAll("\\s+", "");
-        String[] tokens = expression.split("(?<=\\^)|(?=\\^)|(?<=\\+)|(?=\\+)|(?<=-)|(?=-)|(?<=\\*)|(?=\\*)|(?<=/)|(?=/)|(?<=()|(?=()|(?<=)|(?=)))"); // Split expression into tokens
+        String[] tokens = expression.split("[-+*/^()]+");
 
         for (String token : tokens) {
             if (isNumeric(token)) {
@@ -75,13 +106,24 @@ public class MathController {
         this.undoStack.push(new LinkedList<>(this.numberSet));
 
         if (this.numberSet.size() > 1) {
-            System.out.println("Your new set is " + this.numberSet);
-            callInput();
+            this.uiController.setSetLabel("Number Set: " + this.numberSet);
+
+            setDebugLabel("Your new set is " + this.numberSet + " | Reminder: Target = " + this.targetNumber);
         } else {
             int targetDifference = abs((int) (this.targetNumber - e.calculate()));
-            System.out.println("Your number " + e.calculate() + " is " + targetDifference + " away from the target number " + this.targetNumber + ".");
+
+            if (targetDifference == 0) {
+                setDebugLabel("Perfect Score! Your number " + e.calculate() + " is " + targetDifference + " away from the target number " + this.targetNumber + "!");
+
+            } else {
+
+                this.uiController.setSetLabel("Your number " + e.calculate() + " is " + targetDifference + " away from the target number " + this.targetNumber + ".");
+            }
+            new MathController(mathPane, this.uiController);
+
         }
     }
+
 
     public boolean validateExpression(String expression) {
         expression = expression.replaceAll("\\s+", "");
@@ -95,7 +137,8 @@ public class MathController {
             if (isNumeric(token)) {
                 int num = Integer.parseInt(token);
                 if (!this.numberSet.contains(num)) {
-                    System.out.println("Invalid input.");
+                    setDebugLabel("Invalid input.");
+                    wobble(this.textInput);
                     return false;
                 }
                 hasNumericValue = true;
@@ -104,13 +147,15 @@ public class MathController {
                 hasOperator = true;
                 if ("/".equals(token)) {
                     if (lastTokenIsNumeric && "0".equals(tokens[tokens.length - 1])) {
-                        System.out.println("Invalid input.");
+                        setDebugLabel("Invalid input.");
+                        wobble(this.textInput);
                         return false;
                     }
                 }
                 lastTokenIsNumeric = false;
             } else {
-                System.out.println("Invalid input.");
+                setDebugLabel("Invalid input.");
+                wobble(this.textInput);
                 return false;
             }
         }
@@ -118,7 +163,8 @@ public class MathController {
         if (hasNumericValue && hasOperator) {
             return true;
         } else {
-            System.out.println("Expression must contain at least one operator.");
+            setDebugLabel("Expression must contain at least one operator.");
+            wobble(this.textInput);
             return false;
         }
     }
@@ -135,15 +181,71 @@ public class MathController {
 
 
     public void undo() {
-        if (undoStack.size()>1) {
+        if (undoStack.size() > 1) {
             this.undoStack.pop();
             this.numberSet = undoStack.peek();
-            System.out.println("Your set is now " + this.numberSet + ".");
+            setDebugLabel("Your set is now " + this.numberSet + ".");
+            setDebugLabel(String.valueOf(undoStack));
+            this.uiController.undoButtonColorDefault();
         } else {
-            System.out.println("You can't undo any further.");
+            setDebugLabel("You can't undo any further.");
+            this.uiController.undoButtonColorGray();
         }
+        this.uiController.setSetLabel("Number Set: " + this.numberSet);
+        this.textInput.requestFocus();
     }
-}
+
+    public int getTarget() {
+        return this.targetNumber;
+    }
+
+    public LinkedList<Integer> getSet() {
+        return this.numberSet;
+    }
+
+    public void wobble(TextField textField) {
+        TranslateTransition tt = new TranslateTransition(Duration.millis(50), this.textInput);
+        tt.setFromX(-5);
+        tt.setToX(5);
+        tt.setCycleCount(4);
+        tt.setAutoReverse(true);
+
+        tt.play();
+
+        // fade the background color from red to white over 1 second
+        FadeTransition ft = new FadeTransition(Duration.seconds(1));
+        ft.setFromValue(1.0);
+        ft.setToValue(0.0);
+        ft.setOnFinished(e -> this.textInput.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null))));
+        ft.play();
+    }
+
+
+
+    /**
+     * DEBUG
+     */
+
+    private void createDebugPanel() {
+        VBox debugPanel = new VBox();
+        this.debugLabel = new javafx.scene.control.Label();
+        debugPanel.getChildren().addAll(this.debugLabel);
+        debugPanel.setAlignment(Pos.TOP_RIGHT);
+        debugPanel.setPadding(new Insets(50,100,50,50));
+        this.mathPane.getChildren().add(debugPanel);
+
+    }
+
+
+    public void setDebugLabel(String label) {
+        this.debugLabel.setText(label);
+
+        }
+
+
+    }
+
+
 
 
 

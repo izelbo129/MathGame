@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="MathGame:jar2">
+    <output-path>$PROJECT_DIR$/out/artifacts/MathGame_jar2</output-path>
+    <root id="archive" name="MathGame.jar">
+      <element id="module-output" name="MathGame" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/MathParser.org-mXparser-v.5.2-2.1-jdk-bin-only/bin/jdk8/MathParser.org-mXparser.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
